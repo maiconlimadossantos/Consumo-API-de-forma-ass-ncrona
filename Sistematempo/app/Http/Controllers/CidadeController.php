@@ -10,7 +10,7 @@ class CidadeController extends Controller
     public function index()
     {
         $cidades = \App\Models\Cidade::all();
-        return view('cidade.index', compact('cidades'));
+        return view('Cidade', compact('cidades'));
     }
 
     public function create()
@@ -24,6 +24,6 @@ class CidadeController extends Controller
         $cidade->nome = $request->input('nome');
         $cidade->save();
 
-        return redirect()->route('cidade.index');
+        return redirect()->route('Cidade');
     }
 }
