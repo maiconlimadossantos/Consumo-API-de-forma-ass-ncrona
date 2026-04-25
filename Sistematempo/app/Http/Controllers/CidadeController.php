@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\CidadeRequest;
+use Illuminate\Http\Requests;
 
 class CidadeController extends Controller
 {
@@ -17,7 +18,7 @@ class CidadeController extends Controller
         return view('cidade.create');
     }
 
-    public function store(Request $request)
+    public function store(CidadeRequest $request)
     {
         $cidade = new \App\Models\Cidade();
         $cidade->nome = $request->input('nome');
