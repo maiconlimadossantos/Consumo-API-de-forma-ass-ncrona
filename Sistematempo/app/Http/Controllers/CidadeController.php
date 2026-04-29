@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CidadeRequest;
+use App\Models\Cidade;
 use Illuminate\Http\Requests;
 
 class CidadeController extends Controller
 {
     public function index()
     {
-        $cidades = \App\Models\Cidade::all();
-        return view('Cidade', compact('cidades'));
+        return view('cidade.index');
     }
 
     public function create()
@@ -20,10 +20,11 @@ class CidadeController extends Controller
 
     public function store(CidadeRequest $request)
     {
-        $cidade = new \App\Models\Cidade();
-        $cidade->nome = $request->input('nome');
+        $cidade = new Cidade();
+        $cidade->nome = $request->get('nome');
         $cidade->save();
 
-        return redirect()->route('Cidade');
-    }
+        return redirect()->route('cidade.index')->with('success', 'Cidade cadastrada com sucesso!');
+}
+
 }

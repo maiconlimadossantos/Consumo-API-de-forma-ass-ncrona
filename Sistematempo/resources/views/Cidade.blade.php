@@ -2,76 +2,103 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clima Laravel 12</title>
+    <title>Clima & CEP - Laravel 12</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-10">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-4 text-center">Consulta de Temperatura</h2>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-md">
+        <h1 class="text-2xl font-bold mb-6 text-blue-800">Previsão do Tempo</h1>
 
-        <div class="space-y-3">
-            <input type="text" id="city" placeholder="Cidade (ex: Camaqua)" class="w-full border p-2 rounded" placeholder="Cidade (ex: Camaqua)" >
-            <input type="text" id="state" placeholder="Estado (ex: RS)" class="w-full border p-2 rounded" placeholder="Estado (ex:RS)">
-            <input type="text" id="country" placeholder="País (ex: Brazil)" class="w-full border p-2 rounded" placeholder="País (ex: Brazil)">
-            <button onclick="getCoordinates()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
-                Ver Temperatura
+        <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+            <label class="block text-sm font-semibold mb-1">Buscar por CEP (Opcional):</label>
+            <div class="flex gap-2">
+                <input type="text" id="cep" placeholder="00000-000" class="border p-2 rounded w-full">
+                <button onclick="buscarCEP()" class="bg-blue-600 text-white px-4 rounded hover:bg-blue-700">Buscar</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 mb-6">
+            <input type="text" id="city" placeholder="Cidade" class="border p-2 rounded">
+            <input type="text" id="state" placeholder="Estado (Ex: RS)" class="border p-2 rounded">
+            <input type="text" id="country" placeholder="País (Ex: Brazil)" class="border p-2 rounded">
+            <button onclick="obterCoordenadas()" class="bg-green-600 text-white p-3 rounded font-bold hover:bg-green-700">
+                VER TEMPERATURA
             </button>
         </div>
 
-        <div id="result" class="mt-6 hidden border-t pt-4">
-            <p class="text-lg">Cidade: <span id="res_city" class="font-bold"></span></p>
-            <p class="text-3xl font-bold text-blue-600 mt-2"><span id="res_temp"></span>°C</p>
-            <p class="text-sm text-gray-500">Lat: <span id="res_lat"></span> | Lon: <span id="res_lon"></span></p>
+        <div id="resultado" class="hidden border-t pt-6 text-center">
+            <h2 id="res_nome" class="text-xl font-semibold"></h2>
+            <div id="res_temp" class="text-5xl font-black text-orange-500 my-4">--°C</div>
+            <p class="text-gray-500 text-sm">Lat: <span id="res_lat"></span> | Lon: <span id="res_lon"></span></p>
         </div>
     </div>
 
     <script>
-        function getCoordinates() {
-            const city = document.getElementById('city').value;
-            const state = document.getElementById('state').value;
-            const country = document.getElementById('country').value;
-            const apiKey = 'SUA_API_KEY_DO_API_NINJAS'; // Substitua pela sua chave
+        // API 1: VIA CEP (Preenche os campos)
+        function buscarCEP() {
+            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            if (cep.length !== 8) return alert("CEP inválido");
 
-            const xhrGeo = new XMLHttpRequest();
-            const urlGeo = `https://api.api-ninjas.com/v1/geocoding?city=${city}&state=${state}&country=${country}`;
-
-            xhrGeo.open('GET', urlGeo, true);
-            xhrGeo.setRequestHeader('X-Api-Key', apiKey);
-
-            xhrGeo.onreadystatechange = function () {
-                if (xhrGeo.readyState === 4 && xhrGeo.status === 200) {
-                    const data = JSON.parse(xhrGeo.responseText);
-                    if (data.length > 0) {
-                        getWeather(data[0].latitude, data[0].longitude, data[0].name);
-                    } else {
-                        alert('Cidade não encontrada.');
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', `https://viacep.com.br/ws/${cep}/json/`, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (!data.erro) {
+                        document.getElementById('city').value = data.localidade;
+                        document.getElementById('state').value = data.uf;
+                        document.getElementById('country').value = "Brazil";
                     }
                 }
             };
-            xhrGeo.send();
+            xhr.send();
         }
 
-        function getWeather(lat, lon, cityName) {
-            const xhrWeather = new XMLHttpRequest();
-            const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+        // API 2: API NINJAS (Obtém Lat/Lon)
+        function obterCoordenadas() {
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const country = document.getElementById('country').value;
+            const apiKey = 'SUA_API_KEY_AQUI'; // Insira sua chave do api-ninjas.com
 
-            xhrWeather.open('GET', urlWeather, true);
-            xhrWeather.onreadystatechange = function () {
-                if (xhrWeather.readyState === 4 && xhrWeather.status === 200) {
-                    const data = JSON.parse(xhrWeather.responseText);
-                    displayResult(cityName, data.current_weather.temperature, lat, lon);
+            const xhr = new XMLHttpRequest();
+            const url = `https://api.api-ninjas.com/v1/geocoding?city=${city}&state=${state}&country=${country}`;
+
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('X-Api-Key', apiKey);
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.length > 0) {
+                        const { latitude, longitude, name } = data[0];
+                        obterTemperatura(latitude, longitude, name);
+                    } else {
+                        alert("Local não encontrado nas coordenadas.");
+                    }
                 }
             };
-            xhrWeather.send();
+            xhr.send();
         }
 
-        function displayResult(city, temp, lat, lon) {
-            document.getElementById('result').classList.remove('hidden');
-            document.getElementById('res_city').innerText = city;
-            document.getElementById('res_temp').innerText = temp;
-            document.getElementById('res_lat').innerText = lat.toFixed(2);
-            document.getElementById('res_lon').innerText = lon.toFixed(2);
+        // API 3: OPEN METEO (Obtém Clima)
+        function obterTemperatura(lat, lon, nome) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`, true);
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    const temp = data.current_weather.temperature;
+
+                    document.getElementById('resultado').classList.remove('hidden');
+                    document.getElementById('res_nome').innerText = nome;
+                    document.getElementById('res_temp').innerText = `${temp}°C`;
+                    document.getElementById('res_lat').innerText = lat.toFixed(2);
+                    document.getElementById('res_lon').innerText = lon.toFixed(2);
+                }
+            };
+            xhr.send();
         }
     </script>
 </body>
